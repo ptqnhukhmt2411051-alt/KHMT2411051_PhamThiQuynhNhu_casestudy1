@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'database_helper.dart';
 
 void main() {
   runApp(const ExpenseManagerApp());
@@ -504,16 +505,49 @@ class _AddTransactionScreenState
 
               child: ElevatedButton(
 
-                onPressed: () {
 
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Đã lưu giao dịch',
+                onPressed: () async {
+                  if (amountController.text
+                      .trim()
+                      .isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Vui lòng nhập số tiền'),
                       ),
+                    );
+                    return;
+                  }
+
+                  final amount = int.tryParse(
+                    amountController.text.replaceAll('.', '').trim(),
+                  );
+
+                  if (amount == null || amount <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Số tiền không hợp lệ'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  await DatabaseHelper.instance.insertTransaction({
+                    'type': isExpense ? 'expense' : 'income',
+                    'category': category,
+                    'amount': amount,
+                    'date': dateController.text,
+                    'note': noteController.text.trim(),
+                  });
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Đã lưu giao dịch'),
                     ),
                   );
+
+                  Navigator.pop(context, true);
                 },
 
                 style: ElevatedButton.styleFrom(
